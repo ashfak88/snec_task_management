@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useDebounce } from '@/hooks/useDebounce';
 import { useQuery } from '@tanstack/react-query';
 import api from '@/lib/api';
 import { AppLayout } from '@/components/layout/AppLayout';
@@ -14,15 +15,20 @@ export default function AuditLogsPage() {
   const { user } = useAuthStore();
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
+  const debouncedSearch = useDebounce(search, 500);
   const [actionFilter, setActionFilter] = useState<string>('ALL');
   const limit = 15;
 
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch, actionFilter]);
+
   const { data, isLoading } = useQuery({
-    queryKey: ['audit-logs', page, search, actionFilter],
+    queryKey: ['audit-logs', page, debouncedSearch, actionFilter],
     queryFn: async () => {
       const skip = (page - 1) * limit;
       let url = `/audit-logs?skip=${skip}&take=${limit}`;
-      if (search) url += `&search=${search}`;
+      if (debouncedSearch) url += `&search=${debouncedSearch}`;
       if (actionFilter && actionFilter !== 'ALL') url += `&action=${actionFilter}`;
 
       const response = await api.get(url);

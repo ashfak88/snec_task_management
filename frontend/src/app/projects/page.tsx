@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useDebounce } from '@/hooks/useDebounce';
 import { useQuery } from '@tanstack/react-query';
 import api from '@/lib/api';
 import { AppLayout } from '@/components/layout/AppLayout';
@@ -13,6 +14,7 @@ import Link from 'next/link';
 
 export default function ProjectsPage() {
   const [search, setSearch] = useState('');
+  const debouncedSearch = useDebounce(search, 500);
   const [statusFilter, setStatusFilter] = useState('');
   const [priorityFilter, setPriorityFilter] = useState('');
   const [page, setPage] = useState(1);
@@ -23,13 +25,13 @@ export default function ProjectsPage() {
 
   useEffect(() => {
     setPage(1);
-  }, [statusFilter, priorityFilter, search]);
+  }, [statusFilter, priorityFilter, debouncedSearch]);
 
   const { data, isLoading, isFetching } = useQuery({
-    queryKey: ['projects', { search, status: statusFilter, priority: priorityFilter, page }],
+    queryKey: ['projects', { search: debouncedSearch, status: statusFilter, priority: priorityFilter, page }],
     queryFn: async () => {
       const params = new URLSearchParams();
-      if (search) params.append('search', search);
+      if (debouncedSearch) params.append('search', debouncedSearch);
       if (statusFilter) params.append('status', statusFilter);
       if (priorityFilter) params.append('priority', priorityFilter);
 

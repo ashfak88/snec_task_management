@@ -9,6 +9,7 @@ import { User as UserIcon, Plus, Search, MoreVertical, Edit, Trash2, Power } fro
 import { useAuthStore } from '@/store/authStore';
 import { redirect } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { useDebounce } from '@/hooks/useDebounce';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { CreateUserModal } from '@/components/users/CreateUserModal';
@@ -25,6 +26,7 @@ export default function UsersPage() {
   const [deleteUser, setDeleteUser] = useState<any>(null);
 
   const [search, setSearch] = useState('');
+  const debouncedSearch = useDebounce(search, 500);
   const [roleIdFilter, setRoleIdFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [page, setPage] = useState(1);
@@ -38,7 +40,7 @@ export default function UsersPage() {
 
   useEffect(() => {
     setPage(1);
-  }, [roleIdFilter, statusFilter, search]);
+  }, [roleIdFilter, statusFilter, debouncedSearch]);
 
   const { data: rolesData } = useQuery({
     queryKey: ['roles'],
@@ -50,10 +52,10 @@ export default function UsersPage() {
   });
 
   const { data, isLoading, isFetching } = useQuery({
-    queryKey: ['users', { search, roleId: roleIdFilter, status: statusFilter, page }],
+    queryKey: ['users', { search: debouncedSearch, roleId: roleIdFilter, status: statusFilter, page }],
     queryFn: async () => {
       const params = new URLSearchParams();
-      if (search) params.append('search', search);
+      if (debouncedSearch) params.append('search', debouncedSearch);
       if (roleIdFilter) params.append('roleId', roleIdFilter);
       if (statusFilter) params.append('status', statusFilter);
 

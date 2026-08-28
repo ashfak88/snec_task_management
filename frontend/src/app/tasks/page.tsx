@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useDebounce } from '@/hooks/useDebounce';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { DndContext, DragOverlay, closestCorners, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { SortableContext, sortableKeyboardCoordinates } from '@dnd-kit/sortable';
@@ -24,6 +25,7 @@ export default function TasksPage() {
   const [viewingTask, setViewingTask] = useState<any | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const debouncedSearchQuery = useDebounce(searchQuery, 300);
   const [assigneeFilter, setAssigneeFilter] = useState('');
 
   const { data: usersData } = useQuery({
@@ -86,8 +88,8 @@ export default function TasksPage() {
 
   const rawTasks = data || [];
   const tasks = view === 'list' ? rawTasks.filter((t: any) => {
-    const matchesSearch = t.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                          (t.description || '').toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSearch = t.title.toLowerCase().includes(debouncedSearchQuery.toLowerCase()) || 
+                          (t.description || '').toLowerCase().includes(debouncedSearchQuery.toLowerCase());
     const matchesAssignee = assigneeFilter ? t.assigneeId === assigneeFilter : true;
     return matchesSearch && matchesAssignee;
   }) : rawTasks;
